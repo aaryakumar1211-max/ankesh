@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise Hardware OS & Multi-Phase Engineering Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    /*__APP_CSS__*/
+
+    /* Additional polish styles */
+    .cmdk-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 15vh;
+    }
+    .cmdk-modal {
+      width: 100%;
+      max-width: 580px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .cmdk-input {
+      width: 100%;
+      padding: 14px 16px 14px 44px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #334155;
+      color: #f8fafc;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .cmdk-list {
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .cmdk-group-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      padding: 8px 12px 4px;
+    }
+    .cmdk-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+    .cmdk-item:hover, .cmdk-item.active {
+      background: #334155;
+      color: #f8fafc;
+    }
+    .cmdk-shortcut {
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: #94a3b8;
+    }
+
+    #cad-canvas-container {
+      width: 100%;
+      height: 480px;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      position: relative;
+      overflow: hidden;
+    }
+    #cad-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .canvas-overlay-ui {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+    .canvas-slider-bar {
+      position: absolute;
+      bottom: 16px;
+      left: 20px;
+      right: 20px;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(6px);
+      border: 1px solid #334155;
+      padding: 10px 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+    .canvas-slider-bar input[type="range"] {
+      flex: 1;
+      accent-color: #3b82f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-root" id="app">
+    <!-- Toast Notification Banner -->
+    <div id="toast-banner" style="display: none; position: fixed; top: 20px; right: 20px; background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); z-index: 10000; align-items: flex-start; gap: 12px; max-width: 380px; color: #f8fafc;">
+      <span id="toast-icon">ℹ️</span>
+      <div style="flex: 1;">
+        <div id="toast-title" style="font-weight: 600; font-size: 0.875rem;">Notification</div>
+        <div id="toast-message" style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Message content</div>
+      </div>
+      <button onclick="dismissToast()" style="background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem;">×</button>
+    </div>
+
+    <!-- Left Collapsible Sidebar (Phases 1-15) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-group">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; flex-shrink: 0;">
+            ⚡
+          </div>
+          <div id="sidebar-brand-text">
+            <div style="font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;">
+              HARDWARE OS
+            </div>
+            <div style="font-size: 0.6875rem; color: #94a3b8;">Enterprise Suite 2026</div>
+          </div>
+        </div>
+        <button onclick="toggleSidebar()" class="btn-tool" style="padding: 0.3rem; border-radius: 6px;" title="Toggle Sidebar">
+          <span id="sidebar-toggle-icon">◀</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav-scroll">
+        <!-- Group 1: Engineering & Design -->
+        <div>
+          <div class="sidebar-category-header">
+            <span>Engineering & Design</span>
+            <span style="font-size: 0.65rem; color: var(--text-muted);">5 modules</span>
+          </div>
+          <ul class="sidebar-category-list">
+            <li>
+              <button class="sidebar-tab-btn active" id="side-tab-phase1" onclick="switchPhase('phase1')">
+                <span class="sidebar-phase-badge">P1</span>
+                <span>💲</span>
+                <span class="sidebar-tab-text">Contract Pricing</span>
+                <span class="sidebar-shortcut-tag">G 1</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase2" onclick="switchPhase('phase2')">
+                <span class="sidebar-phase-badge">P2</span>
+                <span>📦</span>
+                <span class="sidebar-tab-text">3D CAD Viewer</span>
+                <span class="sidebar-shortcut-tag">G 2</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase3" onclick="switchPhase('phase3')">
+                <span class="sidebar-phase-badge">P3</span>
+                <span>📋</span>
+                <span class="sidebar-tab-text">BOM & FFF</span>
+                <span class="sidebar-shortcut-tag">G 3</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase4" onclick="switchPhase('phase4')">
+                <span class="sidebar-phase-badge">P4</span>
+                <span>🔍</span>
+                <span class="sidebar-tab-text">Parametric Search</span>
+                <span class="sidebar-shortcut-tag">G 4</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase5" onclick="switchPhase('phase5')">
+                <span class="sidebar-phase-badge">P5</span>
+                <span>⚡</span>
+                <span class="sidebar-tab-text">Virtualized Table</span>
+                <span class="sidebar-shortcut-tag">G 5</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Group 2: Procurement & Supply Chain -->
+        <div>
+          <div class="sidebar-category-header">
+            <span>Procurement & Supply</span>
+            <span style="font-size: 0.65rem; color: var(--text-muted);">3 modules</span>
+          </div>
+          <ul class="sidebar-category-list">
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase6" onclick="switchPhase('phase6')">
+                <span class="sidebar-phase-badge">P6</span>
+                <span>📄</span>
+                <span class="sidebar-tab-text">RFQ & Bidding</span>
+                <span class="sidebar-shortcut-tag">G 6</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase7" onclick="switchPhase('phase7')">
+                <span class="sidebar-phase-badge">P7</span>
+                <span>🚚</span>
+                <span class="sidebar-tab-text">EDI & Redlock</span>
+                <span class="sidebar-shortcut-tag">G 7</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase8" onclick="switchPhase('phase8')">
+                <span class="sidebar-phase-badge">P8</span>
+                <span>🌐</span>
+                <span class="sidebar-tab-text">Landed Cost</span>
+                <span class="sidebar-shortcut-tag">G 8</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Group 3: Governance & Security -->
+        <div>
+          <div class="sidebar-category-header">
+            <span>Governance & Security</span>
+            <span style="font-size: 0.65rem; color: var(--text-muted);">3 modules</span>
+          </div>
+          <ul class="sidebar-category-list">
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase9" onclick="switchPhase('phase9')">
+                <span class="sidebar-phase-badge">P9</span>
+                <span>👥</span>
+                <span class="sidebar-tab-text">Approvals & SoD</span>
+                <span class="sidebar-shortcut-tag">G 9</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase10" onclick="switchPhase('phase10')">
+                <span class="sidebar-phase-badge">P10</span>
+                <span>🔑</span>
+                <span class="sidebar-tab-text">SAML & SCIM</span>
+                <span class="sidebar-shortcut-tag">G 10</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase11" onclick="switchPhase('phase11')">
+                <span class="sidebar-phase-badge">P11</span>
+                <span>🔒</span>
+                <span class="sidebar-tab-text">AES-256 & ABAC</span>
+                <span class="sidebar-shortcut-tag">G 11</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Group 4: Compliance & DevOps -->
+        <div>
+          <div class="sidebar-category-header">
+            <span>Compliance & DevOps</span>
+            <span style="font-size: 0.65rem; color: var(--text-muted);">4 modules</span>
+          </div>
+          <ul class="sidebar-category-list">
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase12" onclick="switchPhase('phase12')">
+                <span class="sidebar-phase-badge">P12</span>
+                <span>🗄️</span>
+                <span class="sidebar-tab-text">Audit Ledger</span>
+                <span class="sidebar-shortcut-tag">G 12</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase13" onclick="switchPhase('phase13')">
+                <span class="sidebar-phase-badge">P13</span>
+                <span>🎖️</span>
+                <span class="sidebar-tab-text">SOC 2 Evidence</span>
+                <span class="sidebar-shortcut-tag">G 13</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase14" onclick="switchPhase('phase14')">
+                <span class="sidebar-phase-badge">P14</span>
+                <span>🌿</span>
+                <span class="sidebar-tab-text">DevOps CI/CD</span>
+                <span class="sidebar-shortcut-tag">G 14</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-tab-btn" id="side-tab-phase15" onclick="switchPhase('phase15')">
+                <span class="sidebar-phase-badge">P15</span>
+                <span>☁️</span>
+                <span class="sidebar-tab-text">Terraform & K8s</span>
+                <span class="sidebar-shortcut-tag">G 15</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div class="engine-pulse"></div>
+          <span id="footer-engines-text" style="font-size: 0.75rem; color: #94a3b8;">All 15 Engines Live</span>
+        </div>
+        <span style="font-size: 0.6875rem; font-family: var(--font-mono); color: #64748b;">v1.4.0</span>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Container -->
+    <div class="dashboard-main">
+      <!-- Top Navigation Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <span class="logo-badge" id="top-badge" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 0.3rem 0.75rem; font-size: 0.8125rem;">
+            PHASE 1
+          </span>
+          <div>
+            <h1 id="top-title" style="font-size: 1.0625rem; font-weight: 700; margin: 0; letter-spacing: -0.01em;">
+              Contract Pricing & Margin Guardrails
+            </h1>
+            <div id="top-subtitle" style="font-size: 0.75rem; color: var(--text-secondary);">
+              Engineering & Design &bull; Active Module
+            </div>
+          </div>
+        </div>
+
+        <div class="top-bar-right">
+          <button onclick="openCmdk()" class="btn-tool" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem;">
+            <span>Command Palette</span>
+            <span class="cmdk-shortcut">⌘K</span>
+          </button>
+          <button onclick="toggleTheme()" class="btn-tool" title="Toggle Light / Dark Mode" style="padding: 0.45rem;">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Quick Phase Pills Bar (Phases 1-15) -->
+      <div class="quick-phase-strip">
+        <button class="quick-phase-pill active" id="quick-phase1" onclick="switchPhase('phase1')"><span>💲 P1: Pricing</span></button>
+        <button class="quick-phase-pill" id="quick-phase2" onclick="switchPhase('phase2')"><span>📦 P2: 3D CAD</span></button>
+        <button class="quick-phase-pill" id="quick-phase3" onclick="switchPhase('phase3')"><span>📋 P3: BOM & FFF</span></button>
+        <button class="quick-phase-pill" id="quick-phase4" onclick="switchPhase('phase4')"><span>🔍 P4: Search</span></button>
+        <button class="quick-phase-pill" id="quick-phase5" onclick="switchPhase('phase5')"><span>⚡ P5: Virtual Table</span></button>
+        <button class="quick-phase-pill" id="quick-phase6" onclick="switchPhase('phase6')"><span>📄 P6: RFQ</span></button>
+        <button class="quick-phase-pill" id="quick-phase7" onclick="switchPhase('phase7')"><span>🚚 P7: EDI</span></button>
+        <button class="quick-phase-pill" id="quick-phase8" onclick="switchPhase('phase8')"><span>🌐 P8: Landed Cost</span></button>
+        <button class="quick-phase-pill" id="quick-phase9" onclick="switchPhase('phase9')"><span>👥 P9: Approvals</span></button>
+        <button class="quick-phase-pill" id="quick-phase10" onclick="switchPhase('phase10')"><span>🔑 P10: SAML & SCIM</span></button>
+        <button class="quick-phase-pill" id="quick-phase11" onclick="switchPhase('phase11')"><span>🔒 P11: AES-256</span></button>
+        <button class="quick-phase-pill" id="quick-phase12" onclick="switchPhase('phase12')"><span>🗄️ P12: Audit</span></button>
+        <button class="quick-phase-pill" id="quick-phase13" onclick="switchPhase('phase13')"><span>🎖️ P13: SOC 2</span></button>
+        <button class="quick-phase-pill" id="quick-phase14" onclick="switchPhase('phase14')"><span>🌿 P14: DevOps</span></button>
+        <button class="quick-phase-pill" id="quick-phase15" onclick="switchPhase('phase15')"><span>☁️ P15: Terraform</span></button>
+      </div>
+
+      <!-- Main Workspace Views -->
+      <main class="main-content" style="padding: 2rem; max-width: 1500px; margin: 0 auto; width: 100%;">
+
+        <!-- PHASE 1: PRICING & MARGIN SUITE -->
+        <section id="view-phase1" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 1: Contract Pricing, Volume Quantity Breaks & Margin Floor Guardrails
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Cascading price resolution (Contract &rarr; Tier &rarr; Quantity Break &rarr; MSRP) with automated 18% gross margin floor validation and retrospective volume rebates.
+            </p>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; background: var(--bg-surface); padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Account Profile</label>
+                <select id="pricing-profile" onchange="updatePricing()" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 0.875rem;">
+                  <option value="tesla">Tesla Motors Inc. (Negotiated Contract)</option>
+                  <option value="standard">Standard Open Market Buyer</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Order Quantity</label>
+                <input type="number" id="pricing-qty" value="1000" min="1" step="100" oninput="updatePricing()" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 0.875rem; width: 130px;" />
+              </div>
+            </div>
+            <div id="pricing-badge-container">
+              <span class="status-badge status-active">✨ Negotiated Contract Price Active ($0.12/unit)</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em;">Resolved Unit Price</div>
+              <div style="font-size: 1.75rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;" id="card-unit-price">
+                $0.1200 <span style="font-size: 0.875rem; color: #94a3b8; text-decoration: line-through;">$0.25</span>
+              </div>
+              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;" id="card-unit-notes">Customer Contract Price applied for org-tesla</div>
+            </div>
+
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em;">Extended Total</div>
+              <div style="font-size: 1.75rem; font-weight: 700; color: #34d399; margin-top: 0.25rem;" id="card-extended-total">$120.00</div>
+              <div style="font-size: 0.75rem; color: #34d399; margin-top: 0.5rem;" id="card-savings">Total Savings: $130.00 USD</div>
+            </div>
+
+            <div class="card" style="padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em;">Margin Guardrail</span>
+                <span id="margin-shield-icon">🛡️</span>
+              </div>
+              <div style="font-size: 1.75rem; font-weight: 700; color: #34d399; margin-top: 0.25rem;" id="card-margin-pct">25.0%</div>
+              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;" id="card-margin-msg">Gross margin exceeds 18% floor policy</div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden;">
+            <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-subtle); font-weight: 600; font-size: 0.875rem;">
+              Volume Quantity Break Matrix for LM358DR
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8125rem; text-align: left;">
+              <thead>
+                <tr style="background: #182234; color: #94a3b8; border-bottom: 1px solid var(--border-subtle);">
+                  <th style="padding: 0.75rem 1.25rem;">Quantity Tier</th>
+                  <th style="padding: 0.75rem 1.25rem;">Discount %</th>
+                  <th style="padding: 0.75rem 1.25rem;">Standard Tier Price</th>
+                  <th style="padding: 0.75rem 1.25rem;">Contract Price (Tesla)</th>
+                  <th style="padding: 0.75rem 1.25rem;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="row-tier-1" style="border-bottom: 1px solid #334155;">
+                  <td style="padding: 0.75rem 1.25rem;">1 – 99 units</td>
+                  <td style="padding: 0.75rem 1.25rem;">0%</td>
+                  <td style="padding: 0.75rem 1.25rem;">$0.2500</td>
+                  <td style="padding: 0.75rem 1.25rem; color: #34d399;">$0.1200</td>
+                  <td style="padding: 0.75rem 1.25rem;" id="status-tier-1">—</td>
+                </tr>
+                <tr id="row-tier-2" style="border-bottom: 1px solid #334155;">
+                  <td style="padding: 0.75rem 1.25rem;">100 – 499 units</td>
+                  <td style="padding: 0.75rem 1.25rem;">8%</td>
+                  <td style="padding: 0.75rem 1.25rem;">$0.2300</td>
+                  <td style="padding: 0.75rem 1.25rem; color: #34d399;">$0.1200</td>
+                  <td style="padding: 0.75rem 1.25rem;" id="status-tier-2">—</td>
+                </tr>
+                <tr id="row-tier-3" style="border-bottom: 1px solid #334155; background: rgba(59, 130, 246, 0.1);">
+                  <td style="padding: 0.75rem 1.25rem;">500 – 4,999 units</td>
+                  <td style="padding: 0.75rem 1.25rem;">15%</td>
+                  <td style="padding: 0.75rem 1.25rem;">$0.2125</td>
+                  <td style="padding: 0.75rem 1.25rem; color: #34d399;">$0.1200</td>
+                  <td style="padding: 0.75rem 1.25rem;" id="status-tier-3"><span class="status-badge status-active">Active Selection</span></td>
+                </tr>
+                <tr id="row-tier-4">
+                  <td style="padding: 0.75rem 1.25rem;">5,000+ units</td>
+                  <td style="padding: 0.75rem 1.25rem;">25%</td>
+                  <td style="padding: 0.75rem 1.25rem;">$0.1875</td>
+                  <td style="padding: 0.75rem 1.25rem; color: #34d399;">$0.1200</td>
+                  <td style="padding: 0.75rem 1.25rem;" id="status-tier-4">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PHASE 2: 3D CAD VIEWER -->
+        <section id="view-phase2" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 2: Interactive 3D Exploded Assembly Inspector
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Inspect STEP/GLTF components, bounding boxes, and drag the explosion slider to decompose the assembly.
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem;">
+            <div id="cad-canvas-container">
+              <div class="canvas-overlay-ui">
+                <button class="btn-tool" id="btn-wireframe" onclick="toggleWireframe()">🔲 Wireframe</button>
+                <button class="btn-tool" id="btn-explode-toggle" onclick="toggleExplode()">💥 Explode View</button>
+              </div>
+
+              <div id="cad-canvas"></div>
+
+              <div class="canvas-slider-bar">
+                <span style="font-size: 0.8125rem; font-weight: 600; color: #94a3b8; white-space: nowrap;">Explosion Vector:</span>
+                <input type="range" id="cad-slider" min="0" max="2" step="0.02" value="0" oninput="onExplodeSlider(this.value)" />
+                <span id="cad-slider-pct" style="font-size: 0.8125rem; font-family: var(--font-mono); color: #38bdf8; min-width: 45px;">0%</span>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div class="card" style="padding: 1rem;">
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem;">Assembly Parts (STEP Decomposition)</div>
+                <div id="cad-parts-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"></div>
+              </div>
+
+              <div class="card" style="padding: 1rem;" id="cad-inspector-card">
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">Component Inspector</div>
+                <div id="cad-inspector-content" style="font-size: 0.8125rem; color: #94a3b8;">
+                  Click a part in the 3D scene or parts list to view bounding box and metadata.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 3: BOM RECONCILIATION -->
+        <section id="view-phase3" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 3: Streaming BOM Upload & Real-Time FFF Reconciliation
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Upload customer BOMs to detect lifecycle risks, obsolete parts, and automatically swap in active Form-Fit-Function replacements.
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+            <div class="card" style="padding: 1rem;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">Total Reconciled Parts</div>
+              <div style="font-size: 1.75rem; font-weight: 700; color: #f8fafc;" id="bom-total-parts">5</div>
+            </div>
+            <div class="card" style="padding: 1rem;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">Obsolete / EOL Risks</div>
+              <div style="font-size: 1.75rem; font-weight: 700; color: #f87171;" id="bom-obs-parts">1</div>
+            </div>
+            <div class="card" style="padding: 1rem;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">BOM Health Score</div>
+              <div style="font-size: 1.75rem; font-weight: 700; color: #fbbf24;" id="bom-health-score">80%</div>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>MPN</th>
+                  <th>Manufacturer</th>
+                  <th>Designators</th>
+                  <th>Quantity</th>
+                  <th>Lifecycle</th>
+                  <th>Suggested FFF Replacement</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="bom-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PHASE 4: PARAMETRIC SEARCH -->
+        <section id="view-phase4" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 4: Deep Parametric Component Discovery
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Multi-range parametric facet searching across inventory, tolerances, and packages with sub-50ms query response.
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem;">
+            <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem;">
+              <div style="font-weight: 600; font-size: 0.875rem;">Facet Filters</div>
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Category</label>
+                <select id="filter-cat" onchange="runSearch()" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-size: 0.8125rem;">
+                  <option value="">All Categories</option>
+                  <option value="Resistors">Resistors</option>
+                  <option value="Capacitors">Capacitors</option>
+                  <option value="Integrated Circuits (ICs)">Integrated Circuits (ICs)</option>
+                  <option value="Diodes">Diodes</option>
+                  <option value="Connectors">Connectors</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Package Footprint</label>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8125rem;">
+                  <label><input type="checkbox" value="0402" onchange="runSearch()" class="pkg-filter"> 0402</label>
+                  <label><input type="checkbox" value="0603" onchange="runSearch()" class="pkg-filter"> 0603</label>
+                  <label><input type="checkbox" value="0805" onchange="runSearch()" class="pkg-filter"> 0805</label>
+                  <label><input type="checkbox" value="SOIC-8" onchange="runSearch()" class="pkg-filter"> SOIC-8</label>
+                  <label><input type="checkbox" value="LQFP-64" onchange="runSearch()" class="pkg-filter"> LQFP-64</label>
+                </div>
+              </div>
+              <div style="border-top: 1px solid #334155; padding-top: 0.75rem;">
+                <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 6px;">
+                  <input type="checkbox" id="filter-rohs" onchange="runSearch()"> RoHS Compliant Only
+                </label>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <input type="text" id="search-input" placeholder="Search by MPN, Manufacturer, or Keyword (e.g. LM358, YAGEO, Resistor)..." oninput="runSearch()" style="flex: 1; background: var(--bg-surface); color: #f8fafc; border: 1px solid #334155; padding: 10px 14px; border-radius: 6px; font-size: 0.875rem;" />
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; color: #34d399; white-space: nowrap;">
+                  ⚡ Latency: <strong id="search-latency">2ms</strong> (<span id="search-count">1000</span> items)
+                </div>
+              </div>
+
+              <div class="data-table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>MPN</th>
+                      <th>Manufacturer</th>
+                      <th>Category</th>
+                      <th>Package</th>
+                      <th>Stock</th>
+                      <th>Unit Price</th>
+                      <th>Lifecycle</th>
+                    </tr>
+                  </thead>
+                  <tbody id="search-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 5: VIRTUALIZED TABLE (1,000 ROWS) -->
+        <section id="view-phase5" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+                Phase 5: Virtualized 1,000-Row Parametric Data Table
+              </h2>
+              <p style="font-size: 0.875rem; color: var(--text-secondary);">
+                Rendering 1,000 live catalog items with smooth 60fps row virtualization, sticky headers, and responsive sizing.
+              </p>
+            </div>
+            <span class="status-badge status-active">⚡ 60 FPS Virtualized Viewport</span>
+          </div>
+
+          <div style="border: 1px solid #334155; border-radius: 8px; overflow: hidden; background: #1e293b;">
+            <div style="display: flex; background: #182234; border-bottom: 1px solid #334155; padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase;">
+              <div style="flex: 0 0 200px;">MPN</div>
+              <div style="flex: 0 0 180px;">Manufacturer</div>
+              <div style="flex: 0 0 180px;">Category</div>
+              <div style="flex: 0 0 120px;">Package</div>
+              <div style="flex: 0 0 120px;">In Stock</div>
+              <div style="flex: 0 0 120px;">Unit Price</div>
+              <div style="flex: 1;">Status</div>
+            </div>
+            <div id="virtual-scroll-container" onscroll="renderVirtualTable()" style="height: 520px; overflow-y: auto; position: relative;">
+              <div id="virtual-content" style="height: 44000px; width: 100%; position: relative;">
+                <div id="virtual-viewport" style="position: absolute; top: 0; left: 0; right: 0;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 6: RFQ & SUPPLIER BIDDING -->
+        <section id="view-phase6" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 6: Procurement RFQ Negotiation & Supplier Bid Matrix
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Request for Quote lifecycle state machine, supplier bid intake, HMAC QuoteToken validator, and award resolution.
+            </p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Active RFQ Requisition</div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;">RFQ-2026-9941</div>
+              <div style="font-size: 0.8125rem; color: #94a3b8; margin-top: 0.25rem;">Part: <strong>IRFZ44N Power MOSFET</strong> (10,000 units)</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Target Unit Budget</div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: #34d399; margin-top: 0.25rem;">$0.4500 USD</div>
+              <div style="font-size: 0.8125rem; color: #94a3b8; margin-top: 0.25rem;">Total Target Budget: $4,500.00 USD</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">State Machine Status</div>
+              <div style="font-size: 1.25rem; font-weight: 700; margin-top: 0.25rem;">
+                <span id="rfq-status-badge" class="status-badge status-active">OPEN_FOR_BIDS</span>
+              </div>
+              <div style="font-size: 0.8125rem; color: #94a3b8; margin-top: 0.25rem;">3 Qualified Bids Received</div>
+            </div>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Supplier Name</th>
+                  <th>Bid Unit Price</th>
+                  <th>Lead Time</th>
+                  <th>MOQ</th>
+                  <th>Total Extended</th>
+                  <th>Status</th>
+                  <th>Award Action</th>
+                </tr>
+              </thead>
+              <tbody id="rfq-bids-body">
+                <tr id="bid-row-b1">
+                  <td style="font-weight: 600;">Arrow Electronics</td>
+                  <td style="color: #34d399; font-weight: 600;">$0.4200</td>
+                  <td>14 business days</td>
+                  <td>2,500 units</td>
+                  <td>$4,200.00</td>
+                  <td><span id="bid-status-b1" class="status-badge">PENDING</span></td>
+                  <td><button class="btn-primary btn-sm" onclick="awardBid('b1')">Award Bid &rarr;</button></td>
+                </tr>
+                <tr id="bid-row-b2">
+                  <td style="font-weight: 600;">Mouser Electronics</td>
+                  <td style="color: #34d399; font-weight: 600;">$0.3900</td>
+                  <td>10 business days</td>
+                  <td>5,000 units</td>
+                  <td>$3,900.00</td>
+                  <td><span id="bid-status-b2" class="status-badge">PENDING</span></td>
+                  <td><button class="btn-primary btn-sm" onclick="awardBid('b2')">Award Bid &rarr;</button></td>
+                </tr>
+                <tr id="bid-row-b3">
+                  <td style="font-weight: 600;">Avnet Logistics</td>
+                  <td style="color: #34d399; font-weight: 600;">$0.4400</td>
+                  <td>7 business days</td>
+                  <td>1,000 units</td>
+                  <td>$4,400.00</td>
+                  <td><span id="bid-status-b3" class="status-badge">PENDING</span></td>
+                  <td><button class="btn-primary btn-sm" onclick="awardBid('b3')">Award Bid &rarr;</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PHASE 7: EDI & DISTRIBUTED LOCKS -->
+        <section id="view-phase7" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 7: Supply Chain Orchestration, Bi-Directional EDI & Distributed Locks
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              ANSI X12 850/855/856/810 transaction generator, cXML PunchOut gateway, and Redis Redlock concurrency mutex.
+            </p>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+            <div class="card" style="padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-weight: 600; font-size: 0.875rem;">Live ANSI X12 850 Purchase Order Document</span>
+                <span class="status-badge status-active">Syntax Compliant</span>
+              </div>
+              <pre style="background: #0f172a; padding: 1rem; border-radius: 6px; font-size: 0.75rem; font-family: var(--font-mono); color: #38bdf8; overflow-x: auto; border: 1px solid #334155; line-height: 1.5;">ISA*00*          *00*          *ZZ*ENTERPRISEHUB  *ZZ*SUPPLIERPORTAL *260926*1420*U*00401*000000001*0*P*>~
+GS*PO*ENTERPRISEHUB*SUPPLIERPORTAL*20260926*1420*1*X*004010~
+ST*850*0001~
+BEG*00*NE*PO-99482**20260926~
+CUR*BY*USD~
+PO1*1*5000*EA*0.1800*PE*VP*LM358DR~
+PID*F****IC OPAMP GP 2 CIRCUIT 8SOIC~
+CTT*1~
+SE*7*0001~
+GE*1*1~
+IEA*1*000000001~</pre>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div class="card" style="padding: 1.25rem;">
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                  Redis Redlock Idempotency Mutex
+                </div>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 1rem;">
+                  Guarantees strict once-only ingestion for inbound AS2/SFTP webhook transactions across clustered workers.
+                </p>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                  <span id="redlock-status-badge" class="status-badge status-active">🟢 Lock Released (Available)</span>
+                </div>
+                <div id="redlock-key-display" style="display: none; font-size: 0.7rem; font-family: var(--font-mono); color: #94a3b8; margin-bottom: 1rem;"></div>
+                <button id="redlock-btn" class="btn-tool" onclick="toggleRedlock()" style="width: 100%; justify-content: center;">
+                  Acquire Distributed Lock (5000ms)
+                </button>
+              </div>
+              <div class="card" style="padding: 1.25rem;">
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">cXML PunchOut Protocol</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.5;">
+                  Supports PunchOutSetupRequest & PunchOutOrderMessage cart returns for buyer ERP integrations (SAP Ariba, Coupa).
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 8: FREIGHT & LANDED COST -->
+        <section id="view-phase8" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 8: Freight Density Classification & Landed Cost Engine
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              NMFC freight class density mapping (Classes 50–500) and Incoterms (FOB, DDP, CIF) landed cost calculations with tariff duties.
+            </p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">NMFC Freight Class</div>
+              <div id="logistics-class" style="font-size: 1.75rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;">Class 70</div>
+              <div id="logistics-density" style="font-size: 0.8125rem; color: #94a3b8; margin-top: 0.25rem;">Density: 14.06 PCF (750 lbs / 53.3 cu ft)</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Landed Cost</div>
+              <div id="logistics-total" style="font-size: 1.75rem; font-weight: 700; color: #34d399; margin-top: 0.25rem;">$12,043.75</div>
+              <div id="logistics-unit" style="font-size: 0.8125rem; color: #94a3b8; margin-top: 0.25rem;">Unit Landed Cost: $12.0438 USD</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Customs Duty & Tariffs</div>
+              <div id="logistics-customs" style="font-size: 1.75rem; font-weight: 700; color: #f59e0b; margin-top: 0.25rem;">$393.75</div>
+              <div id="logistics-tariff-label" style="font-size: 0.8125rem; color: #94a3b8; margin-top: 0.25rem;">Tariff Rate: 3.5% (Incoterm: FOB)</div>
+            </div>
+          </div>
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 1rem;">Interactive Parameter Tuning</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Shipment Weight (lbs)</label>
+                <input type="number" id="logistics-weight" value="750" oninput="updateLandedCost()" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-size: 0.8125rem;" />
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Tariff Rate (%)</label>
+                <input type="number" id="logistics-tariff" value="3.5" step="0.5" oninput="updateLandedCost()" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-size: 0.8125rem;" />
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Freight Cost (USD)</label>
+                <input type="number" id="logistics-freight" value="1200" oninput="updateLandedCost()" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-size: 0.8125rem;" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 9: GOVERNANCE & APPROVALS -->
+        <section id="view-phase9" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 9: Enterprise Governance, Hierarchy & Spend Workflows
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Recursive org hierarchy, cost center budget tracking, scoped RBAC & 3-tier spend approval state machine.
+            </p>
+          </div>
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem;">Requisition Amount Simulation</div>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+              <input type="range" id="gov-spend-slider" min="500" max="60000" step="500" value="15000" oninput="updateGovernanceSpend(this.value)" style="flex: 1; accent-color: #3b82f6;" />
+              <span id="gov-spend-value" style="font-size: 1.25rem; font-weight: 700; min-width: 130px; color: #38bdf8;">$15,000 USD</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+              <div id="gov-tier-1" style="padding: 1rem; border-radius: 6px; border: 1px solid #334155;">
+                <div style="font-size: 0.75rem; font-weight: 600; color: #10b981;">TIER 1 (&lt; $5k)</div>
+                <div style="font-size: 0.875rem; font-weight: 700; margin-top: 0.25rem;">System Auto-Approval</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">Immediate purchase order generation without approver hold.</div>
+              </div>
+              <div id="gov-tier-2" style="padding: 1rem; border-radius: 6px; border: 2px solid #f59e0b; background: rgba(245, 158, 11, 0.1);">
+                <div style="font-size: 0.75rem; font-weight: 600; color: #f59e0b;">TIER 2 ($5k - $25k)</div>
+                <div style="font-size: 0.875rem; font-weight: 700; margin-top: 0.25rem;">Department Head</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">Interactive Slack Kit or 1-click email action required.</div>
+              </div>
+              <div id="gov-tier-3" style="padding: 1rem; border-radius: 6px; border: 1px solid #334155;">
+                <div style="font-size: 0.75rem; font-weight: 600; color: #ef4444;">TIER 3 (&gt; $25k)</div>
+                <div style="font-size: 0.875rem; font-weight: 700; margin-top: 0.25rem;">VP Finance Escalation</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">Executive review with cost center budget impact ledger.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 10: IDENTITY, SAML & SCIM -->
+        <section id="view-phase10" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 10: Enterprise Identity Federation, SAML 2.0 & SCIM 2.0 Sync
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              SAML 2.0 SP Metadata, Okta/Azure AD IdP assertions, and SCIM 2.0 automated employee provisioning.
+            </p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">SAML 2.0 Service Provider Metadata</div>
+              <pre style="background: #0f172a; padding: 1rem; border-radius: 6px; font-size: 0.7rem; font-family: var(--font-mono); color: #38bdf8; overflow-x: auto; border: 1px solid #334155;">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;md:EntityDescriptor entityID="https://app.enterprise-platform.internal/saml/metadata"&gt;
+  &lt;md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="true"&gt;
+    &lt;md:NameIDFormat&gt;urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress&lt;/md:NameIDFormat&gt;
+    &lt;md:AssertionConsumerService Location="https://api.enterprise.internal/auth/saml/callback"/&gt;
+  &lt;/md:SPSSODescriptor&gt;
+&lt;/md:EntityDescriptor&gt;</pre>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">SCIM 2.0 Active Directory Sync</div>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8125rem;">
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #334155;">
+                  <span>Endpoint:</span> <code style="color: #38bdf8;">/scim/v2/Users</code>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #334155;">
+                  <span>Schema URN:</span> <code style="font-size: 0.7rem;">urn:ietf:params:scim:schemas:core:2.0:User</code>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                  <span>Sync Mode:</span> <span class="status-badge status-active">Bi-directional Webhook</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 11: SECURITY, AES-256 & ABAC -->
+        <section id="view-phase11" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 11: Envelope Encryption, PII Redaction & Dynamic ABAC
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              AES-256-GCM field encryption, automated secret masking, and dynamic Attribute-Based Access Control rules.
+            </p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">AES-256-GCM Crypto Sandbox</div>
+              <label style="font-size: 0.75rem; color: #94a3b8;">Sensitive Plaintext</label>
+              <input type="text" id="abac-plain-input" value="Supplier Banking Routing Number: 123456789" oninput="updateAbacCipher(this.value)" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-size: 0.8125rem; margin-top: 4px; margin-bottom: 12px;" />
+              <label style="font-size: 0.75rem; color: #94a3b8;">Authenticated Ciphertext</label>
+              <div id="abac-cipher-display" style="background: #0f172a; padding: 8px; border-radius: 6px; border: 1px solid #334155; font-family: var(--font-mono); font-size: 0.75rem; color: #34d399; word-break: break-all;">
+                v1:key-v1:a4f910b8:tag:U3VwcGxpZXIgQmFu
+              </div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">Dynamic ABAC Evaluator</div>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8125rem;">
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #334155;">
+                  <span>High-Value Approvals:</span> <span class="status-badge status-active">Requires MFA</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #334155;">
+                  <span>PII Sanitization:</span> <span class="status-badge status-active">SSN & Card Masking</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                  <span>Key Rotation:</span> <span>Active (key-v1)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 12: IMMUTABLE AUDIT LEDGER -->
+        <section id="view-phase12" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+                Phase 12: Immutable Cryptographic Audit Ledger & Anti-Tamper Engine
+              </h2>
+              <p style="font-size: 0.875rem; color: var(--text-secondary);">
+                HMAC-SHA256 blockchain-style cryptographic hash chains over 1,000+ sequential compliance events.
+              </p>
+            </div>
+            <button id="btn-tamper-toggle" class="btn-tool" onclick="toggleAuditTamper()">
+              Simulate Malicious Tampering
+            </button>
+          </div>
+          <div id="audit-tamper-card" class="card" style="padding: 1.25rem; border-color: #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-weight: 600; font-size: 0.875rem;">Ledger Cryptographic Verification</span>
+              <span id="audit-tamper-badge" class="status-badge status-active">✅ VALID UNBROKEN HASH CHAIN</span>
+            </div>
+            <div id="audit-tamper-msg" style="font-size: 0.8125rem; color: #94a3b8;">
+              Verified 1,000 sequential events. Zero sequence gaps, HMAC signatures valid across all actors.
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 13: SOC 2 EVIDENCE ATTESTATION -->
+        <section id="view-phase13" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 13: Compliance & SOC 2 Type II Evidence Attestation
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Continuous trust service criteria attestation, automated control telemetry, and audit evidence reports.
+            </p>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Control ID</th>
+                  <th>Trust Services Criteria Description</th>
+                  <th>Evidence Status</th>
+                  <th>Audit Attestation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight: 600; font-family: var(--font-mono);">CC6.1</td>
+                  <td>Logical Access Controls & Scoped ABAC</td>
+                  <td><span class="status-badge status-active">✅ COMPLIANT</span></td>
+                  <td style="color: #38bdf8; font-size: 0.8125rem;">Automated Telemetry Verified</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600; font-family: var(--font-mono);">CC6.6</td>
+                  <td>Boundary Protection & Rate Limiting (120 req/min)</td>
+                  <td><span class="status-badge status-active">✅ COMPLIANT</span></td>
+                  <td style="color: #38bdf8; font-size: 0.8125rem;">Automated Telemetry Verified</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600; font-family: var(--font-mono);">CC6.7</td>
+                  <td>Data Encryption at Rest (AES-256-GCM) and Transit (TLS 1.3)</td>
+                  <td><span class="status-badge status-active">✅ COMPLIANT</span></td>
+                  <td style="color: #38bdf8; font-size: 0.8125rem;">Automated Telemetry Verified</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600; font-family: var(--font-mono);">CC7.2</td>
+                  <td>Continuous Monitoring & Immutable Audit Logging</td>
+                  <td><span class="status-badge status-active">✅ COMPLIANT</span></td>
+                  <td style="color: #38bdf8; font-size: 0.8125rem;">Automated Telemetry Verified</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PHASE 14: DEVOPS CI/CD -->
+        <section id="view-phase14" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 14: DevOps CI/CD & Automated Quality Gates
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              GitHub Actions workflow automation, multi-stage Docker minimal runtime, and quality gates.
+            </p>
+          </div>
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 1rem;">Active Pipeline: Release v1.4.0</div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; border: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="color: #34d399;">✓</span>
+                  <span style="font-weight: 600; font-size: 0.8125rem;">Lint & Code Style</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span style="font-size: 0.75rem; color: #94a3b8;">12s</span>
+                  <span class="status-badge status-active">PASS</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; border: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="color: #34d399;">✓</span>
+                  <span style="font-weight: 600; font-size: 0.8125rem;">Unit & Regression Tests (9 Engines)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span style="font-size: 0.75rem; color: #94a3b8;">28s</span>
+                  <span class="status-badge status-active">PASS</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; border: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="color: #34d399;">✓</span>
+                  <span style="font-weight: 600; font-size: 0.8125rem;">SAST & Dependency Audit (0 CVEs)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span style="font-size: 0.75rem; color: #94a3b8;">15s</span>
+                  <span class="status-badge status-active">PASS</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; border: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="color: #34d399;">✓</span>
+                  <span style="font-weight: 600; font-size: 0.8125rem;">Docker Multi-Stage Build</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span style="font-size: 0.75rem; color: #94a3b8;">45s</span>
+                  <span class="status-badge status-active">PASS</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; border: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="color: #38bdf8;">⚡</span>
+                  <span style="font-weight: 600; font-size: 0.8125rem;">Canary Deployment to Kubernetes</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span style="font-size: 0.75rem; color: #94a3b8;">LIVE</span>
+                  <span class="status-badge status-active">ACTIVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHASE 15: TERRAFORM & K8S INFRA -->
+        <section id="view-phase15" style="display: none; flex-direction: column; gap: 1.5rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">
+              Phase 15: Infrastructure as Code (Terraform & Kubernetes)
+            </h2>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+              Declarative Terraform cloud orchestration, Helm charts, HPA autoscaling, and zero-trust VPC networking.
+            </p>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Managed Service</th>
+                  <th>Target Region</th>
+                  <th>Specification</th>
+                  <th>Cluster Health</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight: 600;">GKE Kubernetes Cluster</td>
+                  <td>us-central1</td>
+                  <td style="font-family: var(--font-mono); font-size: 0.75rem;">3x n2-standard-4</td>
+                  <td><span class="status-badge status-active">🟢 HEALTHY</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600;">Cloud SQL PostgreSQL HA</td>
+                  <td>us-central1</td>
+                  <td style="font-family: var(--font-mono); font-size: 0.75rem;">db-custom-4-16384</td>
+                  <td><span class="status-badge status-active">🟢 HEALTHY</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600;">Memorystore Redis Sentinel</td>
+                  <td>us-central1</td>
+                  <td style="font-family: var(--font-mono); font-size: 0.75rem;">5.0 GB Cluster</td>
+                  <td><span class="status-badge status-active">🟢 HEALTHY</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600;">Cloud Armor WAF</td>
+                  <td>global</td>
+                  <td style="font-family: var(--font-mono); font-size: 0.75rem;">Rate limiting + OWASP Top 10</td>
+                  <td><span class="status-badge status-active">🟢 ACTIVE</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- Linear-Grade Command Palette Modal -->
+    <div id="cmdk-modal-container" class="cmdk-overlay" style="display: none;" onclick="closeCmdk(event)">
+      <div class="cmdk-modal" onclick="event.stopPropagation()">
+        <div style="position: relative;">
+          <input type="text" id="cmdk-search" class="cmdk-input" placeholder="Type a command or search actions..." oninput="filterCmdk()" onkeydown="handleCmdkKey(event)" />
+        </div>
+        <div class="cmdk-list" id="cmdk-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Application State ---
+    let catalogData = [];
+    /*__CATALOG_DATA_PLACEHOLDER__*/
+    let activePhaseId = 'phase1';
+    let theme = 'dark';
+    let isSidebarCollapsed = false;
+
+    const phaseMetadata = {
+      phase1: { num: 1, name: 'Contract Pricing & Margin Guardrails', cat: 'Engineering & Design' },
+      phase2: { num: 2, name: '3D CAD Exploded View Inspector', cat: 'Engineering & Design' },
+      phase3: { num: 3, name: 'Streaming BOM Reconciliation & FFF', cat: 'Engineering & Design' },
+      phase4: { num: 4, name: 'Deep Parametric Discovery', cat: 'Engineering & Design' },
+      phase5: { num: 5, name: '60 FPS Virtualized Data Table', cat: 'Engineering & Design' },
+      phase6: { num: 6, name: 'Procurement RFQ & Supplier Bidding', cat: 'Procurement & Supply Chain' },
+      phase7: { num: 7, name: 'Supply Chain EDI & Distributed Locks', cat: 'Procurement & Supply Chain' },
+      phase8: { num: 8, name: 'Freight Density & Landed Cost Engine', cat: 'Procurement & Supply Chain' },
+      phase9: { num: 9, name: 'Enterprise Governance & Multi-Tier Approvals', cat: 'Governance & Security' },
+      phase10: { num: 10, name: 'Enterprise Identity, SAML 2.0 & SCIM Sync', cat: 'Governance & Security' },
+      phase11: { num: 11, name: 'Security Hardening, AES-256-GCM & ABAC', cat: 'Governance & Security' },
+      phase12: { num: 12, name: 'Immutable Audit Logging & Hash Chains', cat: 'Compliance & DevOps' },
+      phase13: { num: 13, name: 'Compliance & SOC 2 Type II Evidence', cat: 'Compliance & DevOps' },
+      phase14: { num: 14, name: 'DevOps CI/CD & Automated Quality Gates', cat: 'Compliance & DevOps' },
+      phase15: { num: 15, name: 'Infrastructure as Code (Terraform & K8s)', cat: 'Compliance & DevOps' },
+    };
+
+    let bomItems = [
+      { mpn: 'LM358D', mfr: 'STMicroelectronics', ref: 'U1, U2', qty: 2, status: 'OBSOLETE', isObs: true, replacement: 'LM358DR', score: 98 },
+      { mpn: 'RC0603FR-0710KL', mfr: 'YAGEO', ref: 'R1, R2, R3', qty: 3, status: 'ACTIVE', isObs: false },
+      { mpn: 'CL10B104KB8NNNC', mfr: 'Samsung Electro-Mechanics', ref: 'C1', qty: 1, status: 'ACTIVE', isObs: false },
+      { mpn: 'CRCW080510K0FKEA', mfr: 'Vishay Dale', ref: 'R4', qty: 1, status: 'ACTIVE', isObs: false },
+      { mpn: 'STM32F407VGT6', mfr: 'STMicroelectronics', ref: 'U3', qty: 1, status: 'ACTIVE', isObs: false },
+    ];
+
+    // --- Phase Switching (All 15 Phases) ---
+    function switchPhase(phaseId) {
+      activePhaseId = phaseId;
+      const meta = phaseMetadata[phaseId];
+
+      for (let i = 1; i <= 15; i++) {
+        const id = 'phase' + i;
+        const viewEl = document.getElementById('view-' + id);
+        const sideBtn = document.getElementById('side-tab-' + id);
+        const quickBtn = document.getElementById('quick-' + id);
+
+        if (viewEl) {
+          viewEl.style.display = id === phaseId ? 'flex' : 'none';
+        }
+        if (sideBtn) {
+          sideBtn.classList.toggle('active', id === phaseId);
+        }
+        if (quickBtn) {
+          quickBtn.classList.toggle('active', id === phaseId);
+        }
+      }
+
+      if (meta) {
+        document.getElementById('top-badge').textContent = 'PHASE ' + meta.num;
+        document.getElementById('top-title').textContent = meta.name;
+        document.getElementById('top-subtitle').textContent = meta.cat + ' • Active Module';
+        showToast('Switched to Phase ' + meta.num, meta.name, '⚡');
+      }
+
+      if (phaseId === 'phase2') initCadViewer();
+      if (phaseId === 'phase5') renderVirtualTable();
+      if (phaseId === 'phase4') runSearch();
+    }
+
+    function toggleSidebar() {
+      isSidebarCollapsed = !isSidebarCollapsed;
+      const sb = document.getElementById('sidebar');
+      sb.classList.toggle('collapsed', isSidebarCollapsed);
+      document.getElementById('sidebar-toggle-icon').textContent = isSidebarCollapsed ? '▶' : '◀';
+    }
+
+    // --- Toast Notifications ---
+    let toastTimer = null;
+    function showToast(title, message, icon = 'ℹ️') {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-message').textContent = message;
+      document.getElementById('toast-icon').textContent = icon;
+      banner.style.display = 'flex';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(dismissToast, 4000);
+    }
+    function dismissToast() {
+      document.getElementById('toast-banner').style.display = 'none';
+    }
+
+    // --- Theme Toggle ---
+    function toggleTheme() {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document.getElementById('theme-icon').textContent = theme === 'dark' ? '🌙' : '☀️';
+      showToast('Theme Changed', 'Switched to ' + theme.toUpperCase() + ' mode', theme === 'dark' ? '🌙' : '☀️');
+    }
+
+    // --- Pricing Engine Logic ---
+    function updatePricing() {
+      const profile = document.getElementById('pricing-profile').value;
+      const qty = Math.max(1, parseInt(document.getElementById('pricing-qty').value) || 1);
+      const isTesla = profile === 'tesla';
+
+      let unitPrice = 0.25;
+      let notes = 'Standard Catalog MSRP';
+      let discountPct = 0;
+
+      if (isTesla) {
+        unitPrice = 0.12;
+        notes = 'Customer Contract Price applied for org-tesla';
+      } else {
+        if (qty >= 5000) { unitPrice = 0.1875; discountPct = 25; notes = 'Quantity Break Applied (-25%)'; }
+        else if (qty >= 500) { unitPrice = 0.2125; discountPct = 15; notes = 'Quantity Break Applied (-15%)'; }
+        else if (qty >= 100) { unitPrice = 0.2300; discountPct = 8; notes = 'Quantity Break Applied (-8%)'; }
+      }
+
+      const total = qty * unitPrice;
+      const msrpTotal = qty * 0.25;
+      const savings = msrpTotal - total;
+
+      const costPrice = 0.09;
+      const marginPct = (((unitPrice - costPrice) / unitPrice) * 100).toFixed(1);
+      const isApproved = parseFloat(marginPct) >= 18.0;
+
+      document.getElementById('card-unit-price').innerHTML = '$' + unitPrice.toFixed(4) + ' <span style="font-size: 0.875rem; color: #94a3b8; text-decoration: line-through;">$0.25</span>';
+      document.getElementById('card-unit-notes').textContent = notes;
+      document.getElementById('card-extended-total').textContent = '$' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('card-savings').textContent = 'Total Savings: $' + savings.toFixed(2) + ' USD';
+      document.getElementById('card-margin-pct').textContent = marginPct + '%';
+      document.getElementById('card-margin-pct').style.color = isApproved ? '#34d399' : '#f87171';
+      document.getElementById('card-margin-msg').textContent = isApproved ? 'Gross margin exceeds 18% floor policy' : 'MARGIN REJECTED: Below 18% floor threshold';
+      document.getElementById('margin-shield-icon').textContent = isApproved ? '🛡️' : '⚠️';
+
+      const badgeCont = document.getElementById('pricing-badge-container');
+      if (isTesla) {
+        badgeCont.innerHTML = '<span class="status-badge status-active">✨ Negotiated Contract Price Active ($0.12/unit)</span>';
+      } else if (discountPct > 0) {
+        badgeCont.innerHTML = '<span class="status-badge status-active">📉 Volume Quantity Break Applied (-' + discountPct + '%)</span>';
+      } else {
+        badgeCont.innerHTML = '<span class="status-badge">Base Catalog List Price (MSRP)</span>';
+      }
+
+      ['tier-1', 'tier-2', 'tier-3', 'tier-4'].forEach(t => {
+        const row = document.getElementById('row-' + t);
+        const st = document.getElementById('status-' + t);
+        if (row && st) {
+          row.style.background = 'transparent';
+          st.innerHTML = '—';
+        }
+      });
+      let activeTierId = 'tier-1';
+      if (qty >= 5000) activeTierId = 'tier-4';
+      else if (qty >= 500) activeTierId = 'tier-3';
+      else if (qty >= 100) activeTierId = 'tier-2';
+
+      const activeRow = document.getElementById('row-' + activeTierId);
+      const activeStatus = document.getElementById('status-' + activeTierId);
+      if (activeRow) activeRow.style.background = 'rgba(59, 130, 246, 0.1)';
+      if (activeStatus) activeStatus.innerHTML = '<span class="status-badge status-active">Active Selection</span>';
+    }
+
+    // --- BOM Management & FFF ---
+    function renderBom() {
+      const tbody = document.getElementById('bom-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      let obsCount = 0;
+
+      bomItems.forEach((item, idx) => {
+        if (item.isObs) obsCount++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = 
+          '<td style="font-weight: 600; font-family: var(--font-mono);">' + item.mpn + '</td>' +
+          '<td style="color: var(--text-secondary);">' + item.mfr + '</td>' +
+          '<td style="font-family: var(--font-mono); font-size: 0.75rem;">' + item.ref + '</td>' +
+          '<td>' + item.qty + '</td>' +
+          '<td><span class="status-badge ' + (item.isObs ? 'status-obsolete' : 'status-active') + '">' + item.status + '</span></td>' +
+          '<td>' + (item.replacement ? '<div style="display: flex; align-items: center; gap: 6px;"><span style="font-weight: 600; color: #34d399;">' + item.replacement + '</span><span class="status-badge status-active" style="font-size: 0.65rem;">' + item.score + '% Match (FFF Drop-in)</span></div>' : '<span style="color: var(--text-muted);">—</span>') + '</td>' +
+          '<td>' + (item.isObs ? '<button class="btn-primary btn-sm" onclick="replaceBomPart(' + idx + ')">Swap Part &rarr;</button>' : '<span style="color: #34d399; font-size: 0.8125rem;">✓ Validated</span>') + '</td>';
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('bom-obs-parts').textContent = obsCount;
+      const total = bomItems.length;
+      const health = Math.round(((total - obsCount) / total) * 100);
+      document.getElementById('bom-health-score').textContent = health + '%';
+      document.getElementById('bom-health-score').style.color = health === 100 ? '#34d399' : '#fbbf24';
+    }
+
+    function replaceBomPart(idx) {
+      const oldMpn = bomItems[idx].mpn;
+      const rep = bomItems[idx].replacement;
+      bomItems[idx].mpn = rep;
+      bomItems[idx].isObs = false;
+      bomItems[idx].status = 'ACTIVE';
+      bomItems[idx].replacement = null;
+      renderBom();
+      showToast('FFF Part Swapped', 'Replaced ' + oldMpn + ' with ' + rep, '✅');
+    }
+
+    // --- Parametric Search ---
+    function runSearch() {
+      const t0 = performance.now();
+      const q = (document.getElementById('search-input').value || '').toLowerCase();
+      const cat = document.getElementById('filter-cat').value;
+      const rohs = document.getElementById('filter-rohs').checked;
+      const selectedPkgs = Array.from(document.querySelectorAll('.pkg-filter:checked')).map(el => el.value);
+
+      const filtered = catalogData.filter(item => {
+        if (cat && item.category !== cat) return false;
+        if (rohs && !item.rohsCompliant) return false;
+        if (selectedPkgs.length > 0 && !selectedPkgs.includes(item.package)) return false;
+        if (q) {
+          const matchMpn = item.mpn.toLowerCase().includes(q);
+          const matchMfr = item.manufacturer.toLowerCase().includes(q);
+          const matchDesc = item.description.toLowerCase().includes(q);
+          if (!matchMpn && !matchMfr && !matchDesc) return false;
+        }
+        return true;
+      });
+
+      const t1 = performance.now();
+      document.getElementById('search-latency').textContent = Math.max(1, Math.round(t1 - t0)) + 'ms';
+      document.getElementById('search-count').textContent = filtered.length;
+
+      const tbody = document.getElementById('search-table-body');
+      tbody.innerHTML = '';
+      filtered.slice(0, 50).forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = 
+          '<td style="font-weight: 600; font-family: var(--font-mono);">' + item.mpn + '</td>' +
+          '<td>' + item.manufacturer + '</td>' +
+          '<td>' + item.category + '</td>' +
+          '<td><code style="font-family: var(--font-mono);">' + item.package + '</code></td>' +
+          '<td>' + item.stockQuantity.toLocaleString() + '</td>' +
+          '<td style="color: #34d399;">$' + item.unitPriceUsd.toFixed(4) + '</td>' +
+          '<td><span class="status-badge ' + (item.lifecycleStatus === 'ACTIVE' ? 'status-active' : 'status-obsolete') + '">' + item.lifecycleStatus + '</span></td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Virtualized Table (60 FPS) ---
+    function renderVirtualTable() {
+      const container = document.getElementById('virtual-scroll-container');
+      if (!container) return;
+      const scrollTop = container.scrollTop;
+      const viewportHeight = 520;
+      const rowHeight = 44;
+
+      const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
+      const endIndex = Math.min(catalogData.length, Math.ceil((scrollTop + viewportHeight) / rowHeight) + 2);
+
+      const viewport = document.getElementById('virtual-viewport');
+      viewport.style.transform = 'translateY(' + (startIndex * rowHeight) + 'px)';
+      viewport.innerHTML = '';
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const row = catalogData[i];
+        if (!row) continue;
+        const div = document.createElement('div');
+        div.style.cssText = 'display: flex; align-items: center; height: 44px; padding: 0 1rem; border-bottom: 1px solid rgba(51, 65, 85, 0.4); font-size: 0.8125rem; background: ' + (i % 2 === 0 ? 'transparent' : 'rgba(30, 41, 59, 0.3)') + ';';
+        div.innerHTML = 
+          '<div style="flex: 0 0 200px; font-weight: 600; font-family: var(--font-mono);">' + row.mpn + '</div>' +
+          '<div style="flex: 0 0 180px;">' + row.manufacturer + '</div>' +
+          '<div style="flex: 0 0 180px;">' + row.category + '</div>' +
+          '<div style="flex: 0 0 120px; font-family: var(--font-mono);">' + row.package + '</div>' +
+          '<div style="flex: 0 0 120px;">' + row.stockQuantity.toLocaleString() + '</div>' +
+          '<div style="flex: 0 0 120px; color: #34d399;">$' + row.unitPriceUsd.toFixed(4) + '</div>' +
+          '<div style="flex: 1;"><span class="status-badge ' + (row.lifecycleStatus === 'ACTIVE' ? 'status-active' : 'status-obsolete') + '">' + row.lifecycleStatus + '</span></div>';
+        div.onclick = () => showToast('Selected ' + row.mpn, row.description + ' - $' + row.unitPriceUsd.toFixed(4), '📋');
+        viewport.appendChild(div);
+      }
+    }
+
+    // --- Interactive Handlers for Phases 6 to 15 ---
+    function awardBid(bidId) {
+      document.getElementById('rfq-status-badge').textContent = 'AWARDED';
+      document.getElementById('rfq-status-badge').className = 'status-badge status-active';
+      ['b1', 'b2', 'b3'].forEach(id => {
+        const row = document.getElementById('bid-row-' + id);
+        const st = document.getElementById('bid-status-' + id);
+        if (id === bidId) {
+          row.style.background = 'rgba(16, 185, 129, 0.15)';
+          st.textContent = 'ACCEPTED (WINNER)';
+          st.className = 'status-badge status-active';
+        } else {
+          row.style.background = 'transparent';
+          st.textContent = 'REJECTED';
+          st.className = 'status-badge status-obsolete';
+        }
+      });
+      showToast('RFQ Awarded', 'Winning supplier selected: ' + bidId.toUpperCase(), '🏆');
+    }
+
+    let isRedlocked = false;
+    function toggleRedlock() {
+      isRedlocked = !isRedlocked;
+      const badge = document.getElementById('redlock-status-badge');
+      const keyDisp = document.getElementById('redlock-key-display');
+      const btn = document.getElementById('redlock-btn');
+
+      if (isRedlocked) {
+        badge.textContent = '🔒 Mutex Held (Resource Busy)';
+        badge.className = 'status-badge status-obsolete';
+        keyDisp.style.display = 'block';
+        keyDisp.textContent = 'Key: redlock:' + Date.now().toString(36) + ' (TTL: 5000ms)';
+        btn.textContent = 'Release Distributed Lock';
+        showToast('Redlock Acquired', 'Distributed lock held for 5000ms', '🔒');
+      } else {
+        badge.textContent = '🟢 Lock Released (Available)';
+        badge.className = 'status-badge status-active';
+        keyDisp.style.display = 'none';
+        btn.textContent = 'Acquire Distributed Lock (5000ms)';
+        showToast('Redlock Released', 'Idempotency lock released cleanly', '🟢');
+      }
+    }
+
+    function updateLandedCost() {
+      const weight = parseFloat(document.getElementById('logistics-weight').value) || 1;
+      const tariff = parseFloat(document.getElementById('logistics-tariff').value) || 0;
+      const freight = parseFloat(document.getElementById('logistics-freight').value) || 0;
+      const cuFt = (48 * 40 * 48) / 1728;
+      const pcf = (weight / cuFt).toFixed(2);
+
+      let fc = 70;
+      if (pcf < 1) fc = 500;
+      else if (pcf < 4) fc = 250;
+      else if (pcf < 8) fc = 125;
+      else if (pcf < 15) fc = 77.5;
+      else if (pcf >= 50) fc = 50;
+
+      const merchandise = 10000;
+      const customs = (merchandise + freight + 50) * (tariff / 100);
+      const total = merchandise + freight + 50 + customs + 150 + 250;
+      const unit = (total / 1000).toFixed(4);
+
+      document.getElementById('logistics-class').textContent = 'Class ' + fc;
+      document.getElementById('logistics-density').textContent = 'Density: ' + pcf + ' PCF (' + weight + ' lbs / ' + cuFt.toFixed(1) + ' cu ft)';
+      document.getElementById('logistics-total').textContent = '$' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('logistics-unit').textContent = 'Unit Landed Cost: $' + unit + ' USD';
+      document.getElementById('logistics-customs').textContent = '$' + customs.toFixed(2);
+      document.getElementById('logistics-tariff-label').textContent = 'Tariff Rate: ' + tariff + '% (Incoterm: FOB)';
+    }
+
+    function updateGovernanceSpend(val) {
+      const amount = parseInt(val);
+      document.getElementById('gov-spend-value').textContent = '$' + amount.toLocaleString() + ' USD';
+      const tier = amount < 5000 ? 1 : amount <= 25000 ? 2 : 3;
+
+      for (let t = 1; t <= 3; t++) {
+        const el = document.getElementById('gov-tier-' + t);
+        if (t === tier) {
+          el.style.border = '2px solid ' + (t === 1 ? '#10b981' : t === 2 ? '#f59e0b' : '#ef4444');
+          el.style.background = t === 1 ? 'rgba(16, 185, 129, 0.1)' : t === 2 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+        } else {
+          el.style.border = '1px solid #334155';
+          el.style.background = 'transparent';
+        }
+      }
+    }
+
+    function updateAbacCipher(plain) {
+      const b64 = btoa(unescape(encodeURIComponent(plain || ' ')));
+      const cipher = 'v1:key-v1:' + Math.random().toString(16).substring(2, 10) + ':tag:' + b64.substring(0, 16);
+      document.getElementById('abac-cipher-display').textContent = cipher;
+    }
+
+    let isTampered = false;
+    function toggleAuditTamper() {
+      isTampered = !isTampered;
+      const card = document.getElementById('audit-tamper-card');
+      const badge = document.getElementById('audit-tamper-badge');
+      const msg = document.getElementById('audit-tamper-msg');
+      const btn = document.getElementById('btn-tamper-toggle');
+
+      if (isTampered) {
+        card.style.borderColor = '#ef4444';
+        badge.textContent = '⚠️ TAMPERING DETECTED AT SEQ #5';
+        badge.className = 'status-badge status-obsolete';
+        msg.textContent = 'Cryptographic HMAC mismatch: Event payload altered without valid signing key at block sequence 5.';
+        btn.textContent = 'Restore Untampered Chain';
+        btn.style.color = '#ef4444';
+        showToast('Audit Alert', 'Cryptographic hash mismatch in block #5!', '⚠️');
+      } else {
+        card.style.borderColor = '#10b981';
+        badge.textContent = '✅ VALID UNBROKEN HASH CHAIN';
+        badge.className = 'status-badge status-active';
+        msg.textContent = 'Verified 1,000 sequential events. Zero sequence gaps, HMAC signatures valid across all actors.';
+        btn.textContent = 'Simulate Malicious Tampering';
+        btn.style.color = 'inherit';
+        showToast('Chain Verified', 'HMAC-SHA256 signatures unbroken', '✅');
+      }
+    }
+
+    // --- 3D CAD WebGL Scene (Three.js) ---
+    let cadScene, cadCamera, cadRenderer, cadControls;
+    let cadMeshes = [];
+    let isWireframe = false;
+    let isExploded = false;
+
+    const partsData = [
+      { id: 'p1', name: 'Mainboard PCB Substrate', mpn: 'PCB-MB-REV2', color: 0x1e3a8a, pos: [0, 0, 0], vec: [0, -1, 0], geo: 'box', size: [8, 0.4, 6], mat: 'FR-4 High TG Glass Epoxy', box: '200 x 10 x 150 mm' },
+      { id: 'p2', name: 'STM32F4 Cortex-M4 MCU', mpn: 'STM32F407VGT6', color: 0x1e293b, pos: [-1.5, 0.5, 0], vec: [-1, 2, -1], geo: 'box', size: [1.8, 0.3, 1.8], mat: 'Epoxy Mold / Silicon Die', box: '14 x 1.4 x 14 mm' },
+      { id: 'p3', name: 'Dual Operational Amplifier IC', mpn: 'LM358DR', color: 0x0f172a, pos: [1.8, 0.4, -1], vec: [1, 2, -1], geo: 'box', size: [1.2, 0.3, 0.8], mat: 'SOIC-8 Plastic Compound', box: '4.9 x 1.75 x 3.9 mm' },
+      { id: 'p4', name: 'Extruded Aluminum Heat Sink', mpn: 'HSK-AL-2525', color: 0x64748b, pos: [-1.5, 1.5, 0], vec: [0, 3, 0], geo: 'box', size: [2.2, 1.0, 2.2], mat: 'Aluminum 6063-T5 Anodized', box: '25 x 15 x 25 mm' },
+      { id: 'p5', name: 'Right-Angle Power Terminal Block', mpn: 'TB-PWR-04P', color: 0x10b981, pos: [3.2, 0.6, 2], vec: [2, 1, 2], geo: 'box', size: [1.2, 0.8, 1.5], mat: 'Polyamide 66 / Phosphor Bronze', box: '15 x 10 x 20 mm' }
+    ];
+
+    function initCadViewer() {
+      const container = document.getElementById('cad-canvas');
+      if (!container || cadRenderer) return;
+
+      if (typeof THREE !== 'undefined') {
+        initThreeJsViewer(container);
+      } else {
+        initFallbackCanvasViewer(container);
+      }
+    }
+
+    function initThreeJsViewer(container) {
+      cadScene = new THREE.Scene();
+      cadScene.background = new THREE.Color(0x0f172a);
+
+      const w = container.clientWidth || 800;
+      const h = container.clientHeight || 480;
+
+      cadCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+      cadCamera.position.set(12, 10, 14);
+
+      cadRenderer = new THREE.WebGLRenderer({ antialias: true });
+      cadRenderer.setSize(w, h);
+      container.appendChild(cadRenderer.domElement);
+
+      if (window.THREE.OrbitControls) {
+        cadControls = new THREE.OrbitControls(cadCamera, cadRenderer.domElement);
+        cadControls.enableDamping = true;
+      }
+
+      cadScene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      dirLight.position.set(10, 20, 15);
+      cadScene.add(dirLight);
+
+      const grid = new THREE.GridHelper(20, 20, 0x475569, 0x334155);
+      grid.position.y = -2;
+      cadScene.add(grid);
+
+      cadMeshes = partsData.map(p => {
+        const geo = new THREE.BoxGeometry(p.size[0], p.size[1], p.size[2]);
+        const mat = new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.3, metalness: 0.6 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
+        mesh.userData = p;
+        cadScene.add(mesh);
+        return mesh;
+      });
+
+      populatePartsList();
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      container.addEventListener('click', (e) => {
+        const rect = cadRenderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, cadCamera);
+        const hits = raycaster.intersectObjects(cadMeshes);
+        if (hits.length > 0) {
+          selectCadPart(hits[0].object.userData);
+        }
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        if (cadControls) cadControls.update();
+        cadRenderer.render(cadScene, cadCamera);
+      }
+      animate();
+    }
+
+    let fallbackCanvas, fallbackCtx, fallbackExplosion = 0;
+    function initFallbackCanvasViewer(container) {
+      container.innerHTML = '<canvas id="fallback-3d-canvas" style="width: 100%; height: 100%; display: block;"></canvas>';
+      fallbackCanvas = document.getElementById('fallback-3d-canvas');
+      fallbackCanvas.width = container.clientWidth || 800;
+      fallbackCanvas.height = container.clientHeight || 480;
+      fallbackCtx = fallbackCanvas.getContext('2d');
+      populatePartsList();
+      drawFallbackScene();
+    }
+
+    function drawFallbackScene() {
+      if (!fallbackCtx) return;
+      const ctx = fallbackCtx;
+      const w = fallbackCanvas.width;
+      const h = fallbackCanvas.height;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w / 2;
+      const cy = h / 2 + 30;
+
+      function project(x, y, z) {
+        const isoX = (x - z) * Math.cos(Math.PI / 6);
+        const isoY = (x + z) * Math.sin(Math.PI / 6) - y;
+        return { px: cx + isoX * 24, py: cy + isoY * 24 };
+      }
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      for (let i = -6; i <= 6; i++) {
+        const p1 = project(i, -2, -6);
+        const p2 = project(i, -2, 6);
+        ctx.beginPath(); ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py); ctx.stroke();
+        const p3 = project(-6, -2, i);
+        const p4 = project(6, -2, i);
+        ctx.beginPath(); ctx.moveTo(p3.px, p3.py); ctx.lineTo(p4.px, p4.py); ctx.stroke();
+      }
+
+      partsData.forEach(p => {
+        const x = p.pos[0] + p.vec[0] * fallbackExplosion;
+        const y = p.pos[1] + p.vec[1] * fallbackExplosion;
+        const z = p.pos[2] + p.vec[2] * fallbackExplosion;
+        const sx = p.size[0] / 2;
+        const sy = p.size[1] / 2;
+        const sz = p.size[2] / 2;
+
+        const p1 = project(x - sx, y - sy, z - sz);
+        const p2 = project(x + sx, y - sy, z - sz);
+        const p3 = project(x + sx, y - sy, z + sz);
+        const p4 = project(x - sx, y - sy, z + sz);
+        const pTop1 = project(x - sx, y + sy, z - sz);
+        const pTop2 = project(x + sx, y + sy, z - sz);
+        const pTop3 = project(x + sx, y + sy, z + sz);
+        const pTop4 = project(x - sx, y + sy, z + sz);
+
+        ctx.fillStyle = '#' + p.color.toString(16).padStart(6, '0');
+        ctx.strokeStyle = isWireframe ? '#38bdf8' : '#334155';
+        ctx.lineWidth = isWireframe ? 2 : 1;
+
+        ctx.beginPath();
+        ctx.moveTo(pTop1.px, pTop1.py);
+        ctx.lineTo(pTop2.px, pTop2.py);
+        ctx.lineTo(pTop3.px, pTop3.py);
+        ctx.lineTo(pTop4.px, pTop4.py);
+        ctx.closePath();
+        if (!isWireframe) ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(pTop4.px, pTop4.py);
+        ctx.lineTo(pTop3.px, pTop3.py);
+        ctx.lineTo(p3.px, p3.py);
+        ctx.lineTo(p4.px, p4.py);
+        ctx.closePath();
+        if (!isWireframe) ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '10px JetBrains Mono';
+        ctx.fillText(p.mpn, pTop1.px, pTop1.py - 6);
+      });
+    }
+
+    function populatePartsList() {
+      const list = document.getElementById('cad-parts-list');
+      if (!list) return;
+      list.innerHTML = '';
+      partsData.forEach(p => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 6px 10px; border-radius: 4px; background: rgba(51, 65, 85, 0.3); font-size: 0.8125rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer;';
+        div.innerHTML = '<div><div style="font-weight: 600;">' + p.mpn + '</div><div style="font-size: 0.7rem; color: #94a3b8;">' + p.name + '</div></div><div style="width: 12px; height: 12px; border-radius: 3px; background: #' + p.color.toString(16).padStart(6, '0') + ';"></div>';
+        div.onclick = () => selectCadPart(p);
+        list.appendChild(div);
+      });
+    }
+
+    function selectCadPart(p) {
+      document.getElementById('cad-inspector-content').innerHTML = 
+        '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+        '<div><span style="color: #94a3b8;">MPN:</span> <strong>' + p.mpn + '</strong></div>' +
+        '<div><span style="color: #94a3b8;">Component:</span> ' + p.name + '</div>' +
+        '<div><span style="color: #94a3b8;">Material:</span> ' + p.mat + '</div>' +
+        '<div><span style="color: #94a3b8;">Bounding Box:</span> <code style="font-family: var(--font-mono);">' + p.box + '</code></div>' +
+        '<div><span style="color: #94a3b8;">Explosion Vector:</span> <code style="font-family: var(--font-mono);">[' + p.vec.join(', ') + ']</code></div>' +
+        '</div>';
+      showToast('Selected ' + p.mpn, p.name, '🔍');
+    }
+
+    function onExplodeSlider(val) {
+      const factor = parseFloat(val);
+      document.getElementById('cad-slider-pct').textContent = Math.round((factor / 2) * 100) + '%';
+      if (cadMeshes.length > 0) {
+        cadMeshes.forEach(mesh => {
+          const p = mesh.userData;
+          mesh.position.set(
+            p.pos[0] + p.vec[0] * factor,
+            p.pos[1] + p.vec[1] * factor,
+            p.pos[2] + p.vec[2] * factor
+          );
+        });
+      } else {
+        fallbackExplosion = factor;
+        drawFallbackScene();
+      }
+    }
+
+    function toggleWireframe() {
+      isWireframe = !isWireframe;
+      if (cadMeshes.length > 0) {
+        cadMeshes.forEach(m => m.material.wireframe = isWireframe);
+      } else {
+        drawFallbackScene();
+      }
+      document.getElementById('btn-wireframe').classList.toggle('active', isWireframe);
+    }
+
+    function toggleExplode() {
+      isExploded = !isExploded;
+      const target = isExploded ? 1.5 : 0;
+      document.getElementById('cad-slider').value = target;
+      onExplodeSlider(target);
+      document.getElementById('btn-explode-toggle').textContent = isExploded ? '⏪ Collapse View' : '💥 Explode View';
+    }
+
+    // --- Command Palette (Cmd+K) ---
+    const cmdkActions = [
+      { id: 'p1', group: 'Engineering', label: 'Phase 1: Contract Pricing & Margin', shortcut: 'G 1', action: () => switchPhase('phase1') },
+      { id: 'p2', group: 'Engineering', label: 'Phase 2: 3D CAD Exploded Viewer', shortcut: 'G 2', action: () => switchPhase('phase2') },
+      { id: 'p3', group: 'Engineering', label: 'Phase 3: BOM Reconciliation & FFF', shortcut: 'G 3', action: () => switchPhase('phase3') },
+      { id: 'p4', group: 'Engineering', label: 'Phase 4: Parametric Search', shortcut: 'G 4', action: () => switchPhase('phase4') },
+      { id: 'p5', group: 'Engineering', label: 'Phase 5: Virtualized 1,000-Row Table (60fps)', shortcut: 'G 5', action: () => switchPhase('phase5') },
+      { id: 'p6', group: 'Procurement', label: 'Phase 6: RFQ Negotiation & Bidding', shortcut: 'G 6', action: () => switchPhase('phase6') },
+      { id: 'p7', group: 'Procurement', label: 'Phase 7: Supply Chain EDI & Redlock', shortcut: 'G 7', action: () => switchPhase('phase7') },
+      { id: 'p8', group: 'Procurement', label: 'Phase 8: Freight Density & Landed Cost', shortcut: 'G 8', action: () => switchPhase('phase8') },
+      { id: 'p9', group: 'Governance', label: 'Phase 9: Approvals & Org Hierarchy', shortcut: 'G 9', action: () => switchPhase('phase9') },
+      { id: 'p10', group: 'Governance', label: 'Phase 10: SAML 2.0 & SCIM Sync', shortcut: 'G 10', action: () => switchPhase('phase10') },
+      { id: 'p11', group: 'Governance', label: 'Phase 11: AES-256-GCM & ABAC Security', shortcut: 'G 11', action: () => switchPhase('phase11') },
+      { id: 'p12', group: 'Compliance', label: 'Phase 12: Cryptographic Audit Ledger', shortcut: 'G 12', action: () => switchPhase('phase12') },
+      { id: 'p13', group: 'Compliance', label: 'Phase 13: SOC 2 Type II Evidence Attestation', shortcut: 'G 13', action: () => switchPhase('phase13') },
+      { id: 'p14', group: 'Compliance', label: 'Phase 14: DevOps CI/CD & Automated Gates', shortcut: 'G 14', action: () => switchPhase('phase14') },
+      { id: 'p15', group: 'Compliance', label: 'Phase 15: Terraform & Kubernetes Infra', shortcut: 'G 15', action: () => switchPhase('phase15') },
+      { id: 'theme', group: 'Settings', label: 'Toggle Light / Dark Mode', shortcut: 'T T', action: toggleTheme },
+      { id: 'verify', group: 'Security', label: 'Verify Cryptographic Hash Chains', shortcut: 'V A', action: () => showToast('Audit Ledger Verified', 'HMAC-SHA256 hash chains valid (0 tamper events)', '🛡️') },
+    ];
+
+    function openCmdk() {
+      document.getElementById('cmdk-modal-container').style.display = 'flex';
+      const input = document.getElementById('cmdk-search');
+      input.value = '';
+      input.focus();
+      filterCmdk();
+    }
+    function closeCmdk() {
+      document.getElementById('cmdk-modal-container').style.display = 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const m = document.getElementById('cmdk-modal-container');
+        if (m.style.display === 'flex') closeCmdk();
+        else openCmdk();
+      }
+      if (e.key === 'Escape') closeCmdk();
+    });
+
+    function filterCmdk() {
+      const q = (document.getElementById('cmdk-search').value || '').toLowerCase();
+      const list = document.getElementById('cmdk-results');
+      list.innerHTML = '';
+
+      const matched = cmdkActions.filter(a => a.label.toLowerCase().includes(q) || a.group.toLowerCase().includes(q));
+      if (matched.length === 0) {
+        list.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: #64748b;">No matching commands</div>';
+        return;
+      }
+
+      matched.forEach((a, i) => {
+        const div = document.createElement('div');
+        div.className = 'cmdk-item ' + (i === 0 ? 'active' : '');
+        div.innerHTML = '<div>' + a.label + '</div><span class="cmdk-shortcut">' + a.shortcut + '</span>';
+        div.onclick = () => { a.action(); closeCmdk(); };
+        list.appendChild(div);
+      });
+    }
+
+    function handleCmdkKey(e) {
+      if (e.key === 'Enter') {
+        const active = document.querySelector('.cmdk-item.active') || document.querySelector('.cmdk-item');
+        if (active) active.click();
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      updatePricing();
+      renderBom();
+    });
+  </script>
+</body>
+</html>

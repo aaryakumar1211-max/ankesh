@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: enterprise-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: enterprise_db
+      POSTGRES_USER: enterprise_user
+      POSTGRES_PASSWORD: enterprise_secure_password_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U enterprise_user -d enterprise_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - enterprise-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: enterprise-redis
+    restart: always
+    command: redis-server --requirepass enterprise_redis_secret
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "enterprise_redis_secret", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - enterprise-net
+
+  typesense:
+    image: typesense/typesense:26.0
+    container_name: enterprise-typesense
+    restart: always
+    environment:
+      TYPESENSE_DATA_DIR: /data
+      TYPESENSE_API_KEY: enterprise_typesense_api_key
+      TYPESENSE_ENABLE_CORS: "true"
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesensedata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - enterprise-net
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: enterprise-api
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://enterprise_user:enterprise_secure_password_prod@postgres:5432/enterprise_db?schema=public
+      REDIS_URL: redis://:enterprise_redis_secret@redis:6379/0
+      TYPESENSE_URL: http://typesense:8108
+      TYPESENSE_API_KEY: enterprise_typesense_api_key
+      HMAC_AUDIT_SECRET: enterprise-hmac-ledger-secret-key-32b
+      ENCRYPTION_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      typesense:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - enterprise-net
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: enterprise-web
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - enterprise-net
+
+volumes:
+  pgdata:
+  redisdata:
+  typesensedata:
+
+networks:
+  enterprise-net:
+    driver: bridge
